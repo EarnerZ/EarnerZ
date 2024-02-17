@@ -1,0 +1,49 @@
+local mb = require("modbus")
+
+-- Configuración del medidor by @EarnerZ
+local meter_address = "192.168.6.51"
+local meter_port = 502
+local meter_device_id = 1
+local meter_registers = {
+    0x4004, 0x4005, 0x4007, 0x4009, 0x400B, 0x400D, 0x4010, 0x4012, 0x4016, 0x4019,
+    0x4031, 0x4032, 0x4033, 0x4034, 0x4035, 0x4036, 0x4037, 0x4046, 0x4047, 0x4048,
+    0x4049, 0x404A, 0x4055, 0x4056, 0x4057, 0x4058, 0x4059, 0x405A, 0x4067, 0x4068,
+    0x4069, 0x406A, 0x406B, 0x406C, 0x406D, 0x406E, 0x406F, 0x4071, 0x4072, 0x4073,
+    0x4074, 0x4075, 0x4076, 0x4095, 0x4096, 0x4097, 0x4098, 0x40A0, 0x40A5, 0x40A6,
+    0x40A7, 0x40A8, 0x40A9, 0x40AA, 0x40AB, 0x40AC, 0x40BF, 0x40C1, 0x40C3, 0x40C5,
+    0x40C7, 0x40C9, 0x40CB, 0x40CD, 0x40CF, 0x40D1, 0x40D3, 0x40D5, 0x40DF, 0x40E1,
+    0x40E3, 0x40E5, 0x40E7, 0x40E9, 0x40EB, 0x40ED, 0x40EF, 0x40F1, 0x40F3, 0x40F5,
+    0x40F7, 0x40F9, 0x40FB, 0x40FD
+}
+
+-- Crear una conexión Modbus TCP
+local connection = mb.new_tcp("netp", meter_address, meter_port, meter_device_id)
+
+-- Leer valores de los registros
+function read_meter_values()
+    local values = {}
+    for _, address in ipairs(meter_registers) do
+        local result, data = connection:read_input_registers(address, 1)
+        if result then
+            table.insert(values, data[1])
+        else
+            print("Error al leer el registro " .. address)
+        end
+    end
+    return values
+end
+
+-- Imprimir valores
+function print_meter_values(values)
+    for i, value in ipairs(values) do
+        print(string.format("Registro 0x%X: %d", meter_registers[i], value))
+    end
+end
+
+-- Realizar la lectura e impresión de valores
+print("Leyendo valores del medidor EW11...")
+local values = read_meter_values()
+print_meter_values(values)
+
+-- Cerrar la conexión Modbus
+connection:close()
